@@ -1,0 +1,28 @@
+{
+  "name": "rekord-ajax",
+  "version": "1.0.0",
+  "homepage": "https://github.com/Rekord/rekord-ajax",
+  "authors": [
+    "Philip Diffenderfer <pdiffenderfer@gmail.com>"
+  ],
+  "description": "A dependency free AJAX implementation of Rekord.rest",
+  "main": "build/rekord-ajax.js",
+  "keywords": [
+    "javascript",
+    "orm",
+    "offline",
+    "rekord",
+    "ajax"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "rekord": "^1.2.0"
+  }
+}
