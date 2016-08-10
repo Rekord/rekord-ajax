@@ -1,3 +1,4 @@
+/* rekord-ajax 1.4.0 - A dependency free AJAX implementation of Rekord.rest by Philip Diffenderfer */
 (function (global, Rekord, undefined)
 {
   var copy = Rekord.copy;
