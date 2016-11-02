@@ -1,6 +1,6 @@
 {
   "name": "rekord-ajax",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "A dependency free AJAX implementation of Rekord.rest",
   "author": "Philip Diffenderfer",
   "license": "MIT",
