@@ -2,6 +2,7 @@
 // Config
 
 QUnit.config.reorder = false;
+QUnit.config.testTimeout = 30 * 1000;
 
 Rekord.autoload = true;
 
