@@ -36,7 +36,7 @@ test( 'get', function(assert)
 
   expect(2);
 
-  Task.fetch( 2, function(t2)
+  Task.fetch( 2, {}, function(t2)
   {
     strictEqual( t2.title, 'quis ut nam facilis et officia qui' );
     strictEqual( t2.completed, false );
@@ -108,7 +108,7 @@ test( 'delete', function(assert)
 
   expect(4);
 
-  Task.fetch( 2, function(t2)
+  Task.fetch( 2, {}, function(t2)
   {
     strictEqual( t2.title, 'quis ut nam facilis et officia qui' );
     strictEqual( t2.completed, false );
@@ -119,5 +119,95 @@ test( 'delete', function(assert)
       ok( t2.$isDeleted() );
       done();
     });
+  });
+});
+
+test( 'model var', function(assert)
+{
+  var done = assert.async();
+  var prefix = 'model_var_';
+
+  var Post = Rekord({
+    name: prefix + 'post',
+    fields: ['title', 'body', 'userId'],
+    api: 'http://jsonplaceholder.typicode.com/posts/'
+  });
+
+  var Comment = Rekord({
+    name: prefix + 'comment',
+    fields: ['postId', 'name', 'email', 'body'],
+    api: 'http://jsonplaceholder.typicode.com/posts/{postId}/comments/'
+  });
+
+  var c0 = new Comment({
+    postId: 1,
+    name: 'Name #6',
+    email: 'email@domain.com',
+    body: 'Body #6'
+  });
+
+  var p0 = c0.$save();
+
+  expect(1);
+
+  p0.success(function() {
+    ok( c0.$isSaved() );
+    done();
+  });
+
+  p0.failure(function() {
+    ok( false );
+  });
+});
+
+test( 'global var', function(assert)
+{
+  var done = assert.async();
+  var prefix = 'global_var_';
+
+  Rekord.Ajax.vars.favePost = 2;
+
+  var Comment = Rekord({
+    name: prefix + 'comment',
+    fields: ['postId', 'name', 'email', 'body'],
+    api: 'http://jsonplaceholder.typicode.com/posts/{postId}/comments/'
+  });
+
+  var s0 = Comment.search('http://jsonplaceholder.typicode.com/posts/{favePost}/comments');
+  var p0 = s0.$run();
+
+  expect(2);
+
+  p0.success(function() {
+    var first = s0.$results[0];
+    ok( first );
+    strictEqual( first.postId, Rekord.Ajax.vars.favePost );
+    done();
+  });
+
+  p0.failure(function() {
+    ok( false );
+  });
+});
+
+test( 'options var', function(assert)
+{
+  var done = assert.async();
+  var prefix = 'options_var_';
+
+  var Comment = Rekord({
+    name: prefix + 'comment',
+    fields: ['postId', 'name', 'email', 'body'],
+    api: 'http://{base}/comments/'
+  });
+
+  expect(4);
+
+  Comment.fetch( 17, {vars:{base:'jsonplaceholder.typicode.com'}}, function(c0) {
+    ok( c0 );
+    strictEqual( c0.id, 17 );
+    strictEqual( c0.postId, 4 );
+    ok( c0.name );
+    done();
   });
 });

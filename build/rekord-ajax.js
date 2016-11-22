@@ -1,4 +1,4 @@
-/* rekord-ajax 1.4.3 - A dependency free AJAX implementation of Rekord.rest by Philip Diffenderfer */
+/* rekord-ajax 1.5.0 - A dependency free AJAX implementation of Rekord.rest by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -24,17 +24,24 @@
 }(this, function(global, Rekord, undefined)
 {
 
+  var win = typeof window !== 'undefined' ? window : global;   // jshint ignore:line
+
   var copy = Rekord.copy;
   var noop = Rekord.noop;
+  var transfer = Rekord.transfer;
+  var format = Rekord.format;
+  var isFormatInput = Rekord.isFormatInput;
   var isEmpty = Rekord.isEmpty;
   var isNumber = Rekord.isNumber;
+  var isObject = Rekord.isObject;
+  var isString = Rekord.isString;
   var Rekord_rest = Rekord.rest;
 
-  var XHR = global.XMLHttpRequest || noop;
-  var XDR = 'withCredentials' in (new XHR()) ? XHR : global.XDomainRequest;
+  var XHR = win.XMLHttpRequest || noop;
+  var XDR = 'withCredentials' in (new XHR()) ? XHR : win.XDomainRequest;
 
-  var clearTimeout = global.clearTimeout;
-  var setTimeout = global.setTimeout;
+  var clearTimeout = win.clearTimeout;
+  var setTimeout = win.setTimeout;
 
   function Rest(database)
   {
@@ -47,33 +54,54 @@
     {
       return x.charAt(x.length - 1) === '/' ? x.substring(0, x.length - 1) : x;
     },
-    all: function( success, failure )
+    buildURL: function(model)
     {
-      this.execute( 'GET', null, undefined, this.database.api, success, failure, [] );
+      return this.removeTrailingSlash( Rekord.Ajax.buildURL( this.database, model ) );
     },
-    get: function( model, success, failure )
+    all: function( options, success, failure )
     {
-      this.execute( 'GET', model, undefined, this.removeTrailingSlash( this.database.api + model.$key() ), success, failure );
+      this.execute( 'GET', null, undefined, this.buildURL(), options, success, failure, [] );
     },
-    create: function( model, encoded, success, failure )
+    get: function( model, options, success, failure )
     {
-      this.execute( 'POST', model, encoded, this.removeTrailingSlash( this.database.api ), success, failure, {} );
+      this.execute( 'GET', model, undefined, this.buildURL( model ), options, success, failure );
     },
-    update: function( model, encoded, success, failure )
+    create: function( model, encoded, options, success, failure )
     {
-      this.execute( 'PUT', model, encoded, this.removeTrailingSlash( this.database.api + model.$key() ), success, failure, {} );
+      this.execute( 'POST', model, encoded, this.buildURL(), options, success, failure, {} );
     },
-    remove: function( model, success, failure )
+    update: function( model, encoded, options, success, failure )
     {
-      this.execute( 'DELETE', model, undefined, this.removeTrailingSlash( this.database.api + model.$key() ), success, failure, {} );
+      this.execute( 'PUT', model, encoded, this.buildURL( model ), options, success, failure, {} );
     },
-    query: function( url, data, success, failure )
+    remove: function( model, options, success, failure )
+    {
+      this.execute( 'DELETE', model, undefined, this.buildURL( model ), options, success, failure, {} );
+    },
+    query: function( url, data, options, success, failure )
     {
       var method = isEmpty( data ) ? 'GET' : 'POST';
 
-      this.execute( method, null, data, url, success, failure );
+      this.execute( method, null, data, url, options, success, failure );
     },
-    execute: function( method, model, data, url, success, failure, offlineValue )
+    encode: function(params, prefix)
+    {
+      var str = [], p;
+
+      for (var p in params)
+      {
+        if ( params.hasOwnProperty( p ) )
+        {
+          var k = prefix ? prefix + '[' + p + ']' : p;
+          var v = params[ p ];
+
+          str.push( isObject( v ) ? this.encode(v, k) : win.encodeURIComponent( k ) + '=' + win.encodeURIComponent( v ) );
+        }
+      }
+
+      return str.join('&');
+    },
+    execute: function( method, model, data, url, extraOptions, success, failure, offlineValue )
     {
       Rekord.debug( Rekord.Debugs.REST, this, method, url, data );
 
@@ -86,14 +114,45 @@
         var aborted;
         var timeoutTimer;
         var options = copy( Rekord.Ajax.options );
+
+        if ( isObject( extraOptions ) )
+        {
+          transfer( extraOptions, options );
+        }
+
         var headers = options.headers = options.headers || {};
         var xhr = options.cors || options.useXDR ? new XDR() : new XHR();
+        var vars = transfer( Rekord.Ajax.vars, transfer( model, {} ) );
 
         options.method = method;
         options.url = url;
         options.data = data;
 
-        Rekord.Ajax.adjustOptions( options, this.database, method, model, data, url, success, failure );
+        if ( isObject( extraOptions ) )
+        {
+          transfer( extraOptions, options );
+
+          if ( isObject( extraOptions.params ) )
+          {
+            var paramString = this.encode( extraOptions.params );
+            var queryIndex = options.url.indexOf('?');
+
+            options.url += queryIndex === -1 ? '?' : '&';
+            options.url += paramString;
+          }
+
+          if ( isObject( extraOptions.vars ) )
+          {
+            transfer( extraOptions.vars, vars );
+          }
+        }
+
+        Rekord.Ajax.adjustOptions( options, this.database, method, model, data, url, vars, extraOptions, success, failure );
+
+        if ( isFormatInput( options.url ) )
+        {
+          options.url = format( options.url, vars );
+        }
 
         var onReadyStateChange = function()
         {
@@ -216,14 +275,21 @@
     xhr.send( options.data );
   }
 
+  function buildURL(db, model)
+  {
+    return model ? db.api + model.$key() : db.api;
+  }
+
   Rekord.setRest( RestFactory, true );
 
   Rekord.Ajax =
   {
     rest: RestFactory,
     options: {},
+    vars: {},
     adjustOptions: noop,
     ajax: ajax,
+    buildURL: buildURL,
     RestClass: Rest
   };
 
