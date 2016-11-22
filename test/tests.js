@@ -1,6 +1,15 @@
 
 module('Ajax');
 
+// TODO Rekord.Ajax.adjustOptions
+// TODO Rekord.Ajax.buildURL
+// TODO Rekord.Ajax.ajax
+// TODO override url/method through options
+// TODO override url/method through global Rekord.Ajax.options
+// TODO params
+// TODO timeout
+// TODO headers
+
 test( 'all', function(assert)
 {
   var done = assert.async();
