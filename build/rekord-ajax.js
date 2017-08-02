@@ -1,4 +1,4 @@
-/* rekord-ajax 1.5.0 - A dependency free AJAX implementation of Rekord.rest by Philip Diffenderfer */
+/* rekord-ajax 1.5.6 - A dependency free AJAX implementation of Rekord.rest by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -280,6 +280,7 @@
     return model ? db.api + model.$key() : db.api;
   }
 
+  Rekord.Rests.Ajax = RestFactory;
   Rekord.setRest( RestFactory, true );
 
   Rekord.Ajax =

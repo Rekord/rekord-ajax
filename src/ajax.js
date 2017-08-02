@@ -279,6 +279,7 @@
     return model ? db.api + model.$key() : db.api;
   }
 
+  Rekord.Rests.Ajax = RestFactory;
   Rekord.setRest( RestFactory, true );
 
   Rekord.Ajax =
